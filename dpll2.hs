@@ -16,22 +16,25 @@ findUnit :: Formula a -> Maybe (Literal a)
 findUnit (c:cs) = if length c == 1 then Just (head c) else findUnit cs
 findUnit []     = Nothing
 
-resolve :: (Eq a) => Formula a -> Literal a -> Formula a
-resolve f literal = let f' = filter (notlem literal) f in
-                    map (filter (/= (negateLiteral literal))) f' 
+resolve :: (Eq a)=>Formula a -> Literal a -> Formula a
+resolve f literal = let f' = filter (notlem literal) f in remov' (negateLiteral literal) f'
 
+eleme :: (Eq a) => Literal a-> Clause a-> Bool
+eleme _ [] = False
+eleme p (x:xs) = if p==x then True else eleme p xs
+
+removeAll ::(Eq a) =>  Literal a -> Clause a -> Clause a
+removeAll y [] = [] 
+removeAll y (x : xs) = if x == y then removeAll y xs else x : removeAll y xs
+
+remov' :: (Eq a) => Literal a -> Formula a -> Formula a
+remov' _ [] = []
+remov' l (x:xs) = if eleme l x then remov' l xs  else x:remov' l xs 
 
 notlem :: (Eq a) =>Literal a -> Clause a -> Bool 
 notlem _ [] = True
 notlem p (x:xs) = if p==x then False else notlem p xs
-
-
-
---resolve :: (Eq a) => Formula a -> Literal a -> Formula a
---resolve f literal = (filter (notlem literal) f)
-
---second :: (Eq a) =>Formula a-> Formula a
---second a b =   
+  
 
 unitPropagate :: (Eq a) => Formula a -> Formula a
 unitPropagate f = case findUnit f of 
