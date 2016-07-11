@@ -47,12 +47,25 @@ purePropagate f = case findPureLiteral f of
                     Nothing -> f
 		    Just a  -> purePropagate $ resolve f a
 
+-- this function is same as `elem` just to use it in Isabelle
+elem' :: (Eq a) =>Clause a -> Formula a -> Bool 
+elem' _ [] = Fasle
+elem' p (x:xs) = if p==x then True else elem' p xs
 
-
+-- with pure literal
 dpll :: (Eq a) => Formula a -> Bool
 dpll f = if [] == f then True                                 
-         else if [] `elem` f then False                        
+         else if elem' [] f then False                        
               else
                   let f' = purePropagate $ unitPropagate f in  
+                  let nextLiteral = head $ head f in          
+                  dpll (resolve f nextLiteral) || dpll (resolve f (negateLiteral nextLiteral))
+
+-- without pure literal                  
+dpll'::(Eq a) => Formula a -> Bool
+dpll' f = if [] == f then True                                 
+         else if elem' [] f then False                        
+              else
+                  let f' = unitPropagate f in  
                   let nextLiteral = head $ head f in          
                   dpll (resolve f nextLiteral) || dpll (resolve f (negateLiteral nextLiteral))
