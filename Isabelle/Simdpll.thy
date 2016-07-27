@@ -64,7 +64,7 @@ apply simp
 done
 
 
-
+(*the other proof for the lemma which help the simp for unitpropagate termination*)
 lemma yes: "findUnit f = Some x \<Longrightarrow> length (filter (notElem x) f) < length f"
 proof (induction f)
   case Nil
@@ -134,7 +134,7 @@ by pat_completeness auto
 termination 
 apply (relation "measure (\<lambda>x. size x)")
 apply (auto)
-apply (simp add: yes)
+apply (simp add: ter)
 done
 
 value "unitPropagate [[1,2],[1],[1,2]]"
@@ -176,29 +176,86 @@ then show ?thesis by (simp add: filter.simps(2) le_imp_less_Suc length_Cons leng
 qed
 qed
 
-lemma ter3: "f \<noteq> [] \<Longrightarrow> \<not> elem [] f \<Longrightarrow> length (filter (notElem (- hd (hd f))) f) < length f"
-oops
-
-
-fun slm ::"Formula \<Rightarrow> Formula"
-where
-"slm f = filter (notElem (-hd (hd f))) f"
-
-value "slm [[-1]]"
+lemma [fundef_cong]:"(\<not>Q' \<Longrightarrow>  P=P') \<Longrightarrow> (Q=Q') \<Longrightarrow> (P \<or> Q)=(P'\<or> Q')"
+by blast
 
 function dpll:: "Formula \<Rightarrow> bool"
 where
-"dpll f = (if f = [] then True else if (elem [] f) then False else (let ff = unitPropagate f in(let nextLiteral = hd( hd f) in dpll (resolve f nextLiteral) \<or> dpll (resolve f (negateLiteral nextLiteral)))))"
+"dpll f = (if f = [] then True else if (elem [] f) then False else (let ff = unitPropagate f in(let nextLiteral = hd( hd f) in  dpll (resolve f (negateLiteral nextLiteral)) \<or>  dpll (resolve f nextLiteral))))"
 by pat_completeness auto 
 
-termination
-apply (relation "measure (\<lambda> x. size x)")
-apply auto
-apply (simp add : ter2)
-apply try
-done
 
+
+lemma ter3: "f \<noteq> [] \<Longrightarrow>
+         \<not> elem [] f \<Longrightarrow>
+         \<not> dpll (map (removeAll (- hd (hd f))) (filter (notElem (hd (hd f))) f)) \<Longrightarrow>
+         dpll_dom (map (removeAll (- hd (hd f))) (filter (notElem (hd (hd f))) f)) \<Longrightarrow>
+         length (filter (notElem (- hd (hd f))) f) < length f"
+proof(induction f)
+case Nil 
+then show ?case by simp
+next 
+case Cons
+fix 
+f a 
+assume 
+prems: "(a#f) \<noteq> []" and
+premss : "\<not> elem [] (a#f)"and
+premsss : "\<not> dpll (map (removeAll (- hd (hd (a#f)))) (filter (notElem (hd (hd (a#f)))) (a#f)))"and
+premssss: "dpll_dom (map (removeAll (- hd (hd (a#f)))) (filter (notElem (hd (hd (a#f)))) (a#f)))"and
+IM: "f \<noteq> [] \<Longrightarrow>
+         \<not> elem [] f \<Longrightarrow>
+         \<not> dpll (map (removeAll (- hd (hd f))) (filter (notElem (hd (hd f))) f)) \<Longrightarrow>
+         dpll_dom (map (removeAll (- hd (hd f))) (filter (notElem (hd (hd f))) f)) \<Longrightarrow>
+         length (filter (notElem (- hd (hd f))) f) < length f"
+
+then show " length (filter (notElem (- hd (hd (a#f)))) (a#f)) < length (a#f)"
+proof (cases "notElem (- hd (hd (a#f))) a")
+case 
+H1: True
+then show ?thesis
+proof(cases "(a#f) \<noteq> []")
+case 
+True
+then show ?thesis
+proof (cases "\<not> elem [] (a#f)")
+case True
+then show ?thesis 
+proof (cases "\<not> dpll (map (removeAll (- hd (hd (a#f)))) (filter (notElem (hd (hd (a#f)))) (a#f)))")
+case True
+then show ?thesis
+proof (cases "dpll_dom (map (removeAll (- hd (hd (a#f)))) (filter (notElem (hd (hd (a#f)))) (a#f)))")
+case True
+then show ?thesis sorry
+next 
+case False
+then show ?thesis using premssss by blast
+qed
+next
+case False
+then show ?thesis using premsss by linarith 
+qed
+next 
+case False 
+then show ?thesis using premss by linarith
+qed
+next case False
+then show ?thesis by simp
+qed
+next case False
+then show ?thesis by (simp add: filter.simps(2) le_imp_less_Suc length_Cons length_filter_le)
+qed
+qed
+
+
+termination
+apply (relation "measure (length)")
+apply auto
+apply (simp add:ter2)
+apply (simp add:ter3)
+done
 
 value "dpll [[1],[2],[(-1),(-2)]]"
 value "dpll [[-1]]"
+
 end
