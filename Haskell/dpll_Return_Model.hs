@@ -53,6 +53,6 @@ dpll2::Formula a -> (Bool,Formula a)
 dpll2 f =  if [] `elem` f then (False,f) else if noZ f then (checkFormula f, f )else let f' = unitPropagate f in let nextLiteral = chooseLiteral f in dpll2 (resolve f (negateLiteral nextLiteral)) 
 
 
-dpll::  Formula a -> Bool
-dpll f = fst (dpll1 f) || fst (dpll2 f)
+dpll::  Formula a -> Maybe (Bool,Formula a)
+dpll f = if fst (dpll1 f) == True then Just (dpll1 f) else if fst (dpll2 f) == True  then Just (dpll2 f) else Nothing
 
