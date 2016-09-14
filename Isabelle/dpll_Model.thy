@@ -120,5 +120,15 @@ fun eval::"Formula \<Rightarrow> bool\<times>Formula \<Rightarrow> bool"
 where
 "eval f (a,f') = (if checkFormula (assignFormula f f') then True else False)"
 
+lemma step_1[simp]:"fst (dpll1 f) = True \<or> fst (dpll2 f) = True \<Longrightarrow>dpll f = Some m \<Longrightarrow>fst m = True"
+by (metis Option.inject dpll.simps)
 
+
+lemma step_2[simp]:"checkFormula (assignFormula f (snd f')) = True \<Longrightarrow> eval f f' = True"
+by (metis dpll_Model.eval.simps surjective_pairing)
+
+
+
+lemma final:"\<forall>f. dpll f = Some m \<Longrightarrow>\<exists>m. eval f m =True"
+oops
 end
