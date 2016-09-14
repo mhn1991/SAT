@@ -56,3 +56,20 @@ dpll2 f =  if [] `elem` f then (False,f) else if noZ f then (checkFormula f, f )
 dpll::  Formula a -> Maybe (Bool,Formula a)
 dpll f = if fst (dpll1 f) == True then Just (dpll1 f) else if fst (dpll2 f) == True  then Just (dpll2 f) else Nothing
 
+
+assignFormula::Formula a -> Formula a -> Formula a
+assignFormula f [] = f
+assignFormula [] f = f
+assignFormula (c:cs) (c':cs') = assignClause c c':assignFormula cs cs'
+
+assign::Clause a -> Literal a -> Clause a
+assign [] _ = []
+assign (c:cs) l = if (fst c == fst l) then l:assign cs l else if snd c /= 0 then c:assign cs l  else (fst c , -1):assign cs l
+
+assignClause :: Clause a -> Clause a -> Clause a
+assignClause c [] = c
+assignClause [] c = c
+assignClause c (l':ls') = assignClause (assign c l') ls' 
+
+eval'::Formula a -> (Bool,Formula a) -> Bool
+eval' f (a,f') = if checkFormula (assignFormula f f') then True else False 
