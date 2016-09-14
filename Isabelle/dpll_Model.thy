@@ -123,12 +123,16 @@ where
 lemma step_1[simp]:"fst (dpll1 f) = True \<or> fst (dpll2 f) = True \<Longrightarrow>dpll f = Some m \<Longrightarrow>fst m = True"
 by (metis Option.inject dpll.simps)
 
+lemma "dpll f = Some m \<Longrightarrow> fst m = True"
+by (metis Option.distinct(1) dpll.simps step_1)
 
 lemma step_2[simp]:"checkFormula (assignFormula f (snd f')) = True \<Longrightarrow> eval f f' = True"
 by (metis dpll_Model.eval.simps surjective_pairing)
 
+lemma "\<exists>f' f. eval f f' =True"
+by (metis assignFormula.simps(1) checkFormula.simps(1) dpll_Model.eval.simps)
 
+lemma final:"\<forall>f. dpll f = Some m \<Longrightarrow> \<exists>f m. eval f m =True"
+by (metis assignFormula.simps(1) checkFormula.simps(1) dpll_Model.eval.simps)
 
-lemma final:"\<forall>f. dpll f = Some m \<Longrightarrow>\<exists>m. eval f m =True"
-oops
 end
