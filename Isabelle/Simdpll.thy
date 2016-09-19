@@ -2,11 +2,11 @@ theory Simdpll
 imports Main
 
 begin
- 
-datatype 'a Option      = None | Some 'a
+datatype 'a Option      =  None | Some 'a
 type_synonym    Literal =  int  
 type_synonym  Clause    =  "Literal list" 
-type_synonym Formula    = "Clause list"
+type_synonym Formula    =  "Clause list"
+type_synonym Model      =  Clause
 
 fun negateLiteral :: "(Literal) \<Rightarrow>  Literal "
 where
@@ -257,5 +257,63 @@ done
 
 value "dpll [[1],[2],[(-1),(-2)]]"
 value "dpll [[-1]]"
+value "dpll []"
+
+
+lemma step_1:"f = [] \<Longrightarrow> dpll f = True"
+apply auto
+done 
+
+lemma step_2:"f \<noteq> [] \<Longrightarrow> elem [] f = True \<Longrightarrow> dpll f = False"
+apply auto
+done
+
+lemma step_3: "\<exists>m. dpll m = True"
+using step_1 by blast
+
+lemma step_4: "\<forall>f. f \<noteq> []  \<Longrightarrow>\<exists>m. dpll m = True"
+using step_3
+apply auto
+done 
+
+(*============================================================================================*)
+fun evalClause::"Formula \<Rightarrow> Literal \<Rightarrow> Formula"
+where
+"evalClause f l =  (resolve f l) "
+
+function eval::"Formula \<Rightarrow> Model \<Rightarrow> bool"
+where
+"eval [] [] = True"
+|
+"eval f (m#ms)= (if f = [] then True else if elem [] f then False  else  eval (evalClause f m) ms)"
+sorry
+termination sorry
+
+value "eval [] []"
+
+lemma "\<forall>f. dpll f = True \<Longrightarrow> \<exists>m. eval f m =True"
+using eval.elims(3) by blast
+
+lemma "dpll f = True \<Longrightarrow> \<forall>f. \<exists>m. eval f m =True"
+using eval.elims(3) by blast
+
+lemma "\<forall>f . \<exists>m. eval f m =True \<Longrightarrow> dpll f = True"
+apply (induction f)
+apply simp
+by (meson elem.simps(2) eval.elims(2) not_Cons_self2)
+
+lemma "(\<forall> m. eval f m = False \<Longrightarrow> \<forall>f. dpll f = False)"
+apply (induction f)
+apply (meson Simdpll.eval.simps(2))
+using eval.elims(3) by blast
+
+lemma "(\<forall>f. dpll f = False \<Longrightarrow> \<forall>m. eval f m = False)"
+apply (induction f)
+apply simp
+apply metis
+using step_3 by blast
 
 end
+
+
+
