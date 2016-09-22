@@ -226,7 +226,7 @@ case True
 then show ?thesis
 proof (cases "dpll_dom (map (removeAll (- hd (hd (a#f)))) (filter (notElem (hd (hd (a#f)))) (a#f)))")
 case True
-then show ?thesis sorry
+then show ?thesis sorry 
 next 
 case False
 then show ?thesis using premssss by blast
@@ -249,7 +249,7 @@ qed
 
 
 termination
-apply (relation "measure (length)")
+apply (relation "measure (\<lambda>f. length f)")
 apply auto
 apply (simp add:ter2)
 apply (simp add:ter3)
@@ -283,31 +283,50 @@ where
 
 function eval::"Formula \<Rightarrow> Model \<Rightarrow> bool"
 where
-"eval [] [] = True"
+"eval f [] = (if f = [] then True else False)"
 |
 "eval f (m#ms)= (if f = [] then True else if elem [] f then False  else  eval (evalClause f m) ms)"
-sorry
-termination sorry
+apply auto
+by (meson list.exhaust)
 
-value "eval [] []"
+termination 
 
-lemma "\<forall>f. dpll f = True \<Longrightarrow> \<exists>m. eval f m =True"
-using eval.elims(3) by blast
+apply (relation "measure (\<lambda>(f,m). length m)")
+apply auto
+done
 
-lemma "dpll f = True \<Longrightarrow> \<forall>f. \<exists>m. eval f m =True"
-using eval.elims(3) by blast
+value"[[]] = []"
 
-lemma "\<forall>f . \<exists>m. eval f m =True \<Longrightarrow> dpll f = True"
+
+lemma step_5[simp]:"eval [] [] = True"
+by simp
+
+lemma step_6[simp]:"f\<noteq>[] \<Longrightarrow> eval f [] = False"
+by simp
+
+lemma step_7[simp]:"eval [] m = True"
+using eval.elims(3) by fastforce
+
+value "eval [[]] []"
+
+lemma [simp]:"\<forall>f. dpll f = True \<Longrightarrow> \<exists>m. eval f m =True"
+using step_2 by fastforce
+
+lemma "\<forall>f. dpll f = True \<Longrightarrow>  \<exists>m. eval f m =True"
+using step_2 by fastforce
+
+lemma [simp]:"\<forall>f . \<exists>m. eval f m =True \<Longrightarrow> dpll f = True"
 apply (induction f)
 apply simp
 by (meson elem.simps(2) eval.elims(2) not_Cons_self2)
 
-lemma "(\<forall> m. eval f m = False \<Longrightarrow> \<forall>f. dpll f = False)"
+lemma "(\<forall>f m. eval f m = False \<Longrightarrow>  dpll f = False)"
 apply (induction f)
-apply (meson Simdpll.eval.simps(2))
-using eval.elims(3) by blast
+using step_5 apply auto[1]
+using step_5 by blast
 
-lemma "(\<forall>f. dpll f = False \<Longrightarrow> \<forall>m. eval f m = False)"
+
+lemma [simp]:"(\<forall>f. dpll f = False \<Longrightarrow> \<forall>m. eval f m = False)"
 apply (induction f)
 apply simp
 apply metis
