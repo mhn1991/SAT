@@ -6,7 +6,7 @@ datatype 'a Option      =  None | Some 'a
 type_synonym    Literal =  int  
 type_synonym  Clause    =  "Literal list" 
 type_synonym Formula    =  "Clause list"
-type_synonym Model      =  Clause
+type_synonym Model      =  "Literal set"
 
 fun negateLiteral :: "(Literal) \<Rightarrow>  Literal "
 where
@@ -274,7 +274,33 @@ using step_1 by blast
 lemma step_4: "\<forall>f. f \<noteq> []  \<Longrightarrow>\<exists>m. dpll m = True"
 using step_3
 apply auto
-done 
+done
+(*============================================================================================*) 
+fun evalClause'::"Clause \<Rightarrow> Model \<Rightarrow> bool"
+where
+"evalClause' [] m = False"
+|
+"evalClause' (l#ls) m = (if l \<in> m then True else evalClause' ls m)"
+
+fun eval'::"Formula \<Rightarrow>Model \<Rightarrow>bool"
+where
+"eval' [] m = True"
+|
+"eval' (c#cs) m = ((evalClause' c m) \<and> (eval' cs m))"
+
+
+lemma "\<forall>f. dpll f = True \<Longrightarrow>  \<exists>m. eval' f m =True"
+by (metis dpll.simps elem.simps(2) list.distinct(1))
+
+lemma "\<forall>f.  \<exists>m. eval' f m =True \<Longrightarrow> dpll f = True"
+using eval'.simps(2) evalClause'.simps(1) by blast
+
+lemma "(\<forall>f. dpll f = False \<Longrightarrow> \<forall>m. eval' f m = False)"
+using step_3 by auto
+
+lemma "\<forall>f m. eval' f m = False \<Longrightarrow>  dpll f = False"
+using eval'.simps(1) by auto
+
 
 (*============================================================================================*)
 fun evalClause::"Formula \<Rightarrow> Literal \<Rightarrow> Formula"
@@ -307,10 +333,7 @@ by simp
 lemma step_7[simp]:"eval [] m = True"
 using eval.elims(3) by fastforce
 
-value "eval [[]] []"
-
-lemma [simp]:"\<forall>f. dpll f = True \<Longrightarrow> \<exists>m. eval f m =True"
-using step_2 by fastforce
+value "dpll[[1,-1]]"
 
 lemma "\<forall>f. dpll f = True \<Longrightarrow>  \<exists>m. eval f m =True"
 using step_2 by fastforce
@@ -319,6 +342,7 @@ lemma [simp]:"\<forall>f . \<exists>m. eval f m =True \<Longrightarrow> dpll f =
 apply (induction f)
 apply simp
 by (meson elem.simps(2) eval.elims(2) not_Cons_self2)
+
 
 lemma "(\<forall>f m. eval f m = False \<Longrightarrow>  dpll f = False)"
 apply (induction f)
