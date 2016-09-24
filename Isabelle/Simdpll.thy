@@ -289,11 +289,16 @@ where
 "eval' (c#cs) m = ((evalClause' c m) \<and> (eval' cs m))"
 
 
+
 lemma "\<forall>f. dpll f = True \<Longrightarrow>  \<exists>m. eval' f m =True"
 by (metis dpll.simps elem.simps(2) list.distinct(1))
 
 lemma "\<forall>f.  \<exists>m. eval' f m =True \<Longrightarrow> dpll f = True"
 using eval'.simps(2) evalClause'.simps(1) by blast
+
+lemma " (\<forall>f. dpll f = True) \<longleftrightarrow> (\<forall>f. \<exists>m. eval' f m =True)"
+by (metis elem.simps(2) eval'.simps(2) evalClause'.simps(1) list.distinct(1) step_2)
+
 
 lemma "(\<forall>f. dpll f = False \<Longrightarrow> \<forall>m. eval' f m = False)"
 using step_3 by auto
@@ -301,7 +306,8 @@ using step_3 by auto
 lemma "\<forall>f m. eval' f m = False \<Longrightarrow>  dpll f = False"
 using eval'.simps(1) by auto
 
-
+lemma "(\<forall>f. dpll f = False) \<longleftrightarrow> (\<forall>f m. eval' f m = False)"
+using eval'.simps(1) step_1 by blast
 (*============================================================================================*)
 fun evalClause::"Formula \<Rightarrow> Literal \<Rightarrow> Formula"
 where
